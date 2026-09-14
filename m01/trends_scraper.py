@@ -251,7 +251,7 @@ def main():
     # Build the URL for Google Trends
     date_range = "now%207-d"
     geo = "US"
-    query = "vibe coding"
+    query = "chocolate cake"
     site = "https://trends.google.com/trends/explore"
     url = f"{site}?date={date_range}&geo={geo}&q={query}&hl=en"
 
