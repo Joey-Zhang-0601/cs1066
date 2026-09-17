@@ -25,7 +25,6 @@ Date: June 2026
 
 import os
 import re
-import subprocess
 import sys
 from urllib import request, error
 import zipfile
@@ -41,7 +40,7 @@ COURSE_NAME = f'cs{COURSE_NUM}'
 
 # Global constants and configuration parameters
 ORG_URL = f'https://github.com/{COURSE_NAME}/'
-CODESPACES_ROOT = f'/workspaces/{COURSE_NAME}'
+CODESPACES_ROOT = os.path.dirname(os.path.abspath(__file__))
 MAIN_ZIP_PATH = '/archive/refs/heads/main.zip'
 
 def determine_dst(module, item):
@@ -169,10 +168,9 @@ def process_zipfile(repo):
 
     # Download the repo's files (quietly)
     try:
-        command = ['wget', url]
-        subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+        request.urlretrieve(url, zip_fname)
     except Exception as e:
-        sys.exit(f"ERROR executing wget command: {e}")
+        sys.exit(f"ERROR downloading {url}: {e}")
     print(f"... Zip file downloaded from: {url}")
 
     # Unzip the downloaded file
