@@ -1,0 +1,10 @@
+[
+  {
+    "title": "A Strange Section",
+    "template": "Today I went to [0]'s section, were swapping [1] with each other and I ",
+    "inputs": {
+      "0": "noun",
+      "1": "noun"
+    }
+  }
+]
