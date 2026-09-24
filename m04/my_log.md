@@ -2,7 +2,7 @@
 
 Joey Zhang
 
-INSERT-YOUR-VIDEO-LINK (after completing this assignment)
+https://harvard.zoom.us/rec/play/Ay5nTa-HkbZjbsXQpQQRkFHcykme25trdRwJXTQARUnFy6XkBqtHhOZP81DICjLFfPvl-fEl2nkZpwTb.lkW00GMgKm7UFyY3?accessLevel=meeting&canPlayFromShare=true&from=my_recording&continueMode=true&oldStyle=true&componentName=rec-play&originRequestUrl=https%3A%2F%2Fharvard.zoom.us%2Frec%2Fshare%2FgysyWlXakVVdrecVfNJ57rnzzSLFVyAbG93xLNP0yEhlHX08P0t-AnjXL55aNS5f.dvUJxGHxrp71Tz8d
 
 ----
 ----
@@ -47,6 +47,18 @@ Reflections on success/failure of this prompt:
 
 ----
 
+Text of my next prompt:
+
+> Fix the financial-data bug: some companies are missing or showing incorrect annual revenue values. Check the EDGAR records and make the program choose the correct full-year period and revenue tag when the data is available.
+
+Reflections on success/failure of this prompt:
+
+*   Testing AMD showed that the program selected the first record under an FY label instead of the full-year period.
+*   Testing Camden showed that the first revenue tag was only a small component of its actual revenue.
+*   The problem was solved by checking period dates, comparing revenue tags, and filling accessible missing years from valid tags.
+
+----
+
 **NOTE:** Delete this text and repeat the above block for as many prompts as it takes to complete the pset.
 
 ----
@@ -59,6 +71,7 @@ I could have mentioned a few additional requirements:
 *   That the program should test the API with a sample CIK after implementation.
 *   Whether the charts should use lines or bars and how large financial values should be formatted.
 *   How to handle multiple companies with similar names.
+*   Testing real companies was important because EDGAR does not organize every company's facts in exactly the same way.
 
 ----
 ----

@@ -2,6 +2,8 @@ import json
 from difflib import get_close_matches
 from html import escape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from datetime import date
+from statistics import median
 from urllib.parse import parse_qs, urlparse
 
 import requests
@@ -180,9 +182,66 @@ def fact_series(facts: dict, tags: tuple[str, ...], cutoff: int = 10) -> list[di
                 continue
             year = int(item["fy"])
             previous = by_year.get(year)
-            if previous is None or (previous["tag"] not in tags[:tags.index(tag)] and item.get("filed", "") > previous["item"].get("filed", "")):
+            if previous is None or fact_is_better(item, previous["item"], year, tags.index(tag), tags.index(previous["tag"])):
                 by_year[year] = {"item": item, "tag": tag}
     return [{"year": year, "value": by_year[year]["item"]["val"]} for year in sorted(by_year)[-cutoff:]]
+
+
+def revenue_series(facts: dict, cutoff: int = 10) -> list[dict]:
+    tags = (
+        "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "Revenues",
+        "SalesRevenueNet",
+        "OperatingLeaseLeaseIncome",
+        "RealEstateRevenueNet",
+        "OperatingLeasesIncomeStatementMinimumLeaseRevenue",
+    )
+    candidates = []
+    for tag in tags:
+        items = annual_fact_items(facts, tag)
+        if items:
+            values = [item["val"] for item in items.values() if item.get("val") is not None]
+            candidates.append((median(values), items))
+    if not candidates:
+        raise ValueError("EDGAR does not report an annual revenue fact.")
+    _, selected = max(candidates, key=lambda candidate: candidate[0])
+    for _, items in candidates:
+        for year, item in items.items():
+            if year not in selected:
+                selected[year] = item
+    return [{"year": year, "value": selected[year]["val"]} for year in sorted(selected)[-cutoff:]]
+
+
+def annual_fact_items(facts: dict, tag: str) -> dict[int, dict]:
+    units = facts.get("us-gaap", {}).get(tag, {}).get("units", {})
+    unit_values = units.get("USD") or next(iter(units.values()), [])
+    by_year = {}
+    for item in unit_values:
+        if item.get("form") != "10-K" or item.get("fp") != "FY" or not item.get("fy"):
+            continue
+        year = int(item["fy"])
+        previous = by_year.get(year)
+        if previous is None or fact_is_better(item, previous, year, 0, 0):
+            by_year[year] = item
+    return by_year
+
+
+def fact_is_better(candidate: dict, current: dict, year: int, candidate_priority: int, current_priority: int) -> bool:
+    candidate_full_year = period_is_full_year(candidate, year)
+    current_full_year = period_is_full_year(current, year)
+    if candidate_full_year != current_full_year:
+        return candidate_full_year
+    if candidate_priority != current_priority:
+        return candidate_priority < current_priority
+    return candidate.get("filed", "") > current.get("filed", "")
+
+
+def period_is_full_year(item: dict, year: int) -> bool:
+    if not item.get("start") or not item.get("end"):
+        return True
+    start = date.fromisoformat(item["start"])
+    end = date.fromisoformat(item["end"])
+    return end.year == year and 300 <= (end - start).days <= 400
 
 
 def fetch_financials(cik: str) -> dict:
@@ -193,7 +252,7 @@ def fetch_financials(cik: str) -> dict:
     return {
         "company": payload.get("entityName", f"CIK {cik}"),
         "cik": str(int(cik)),
-        "revenue": fact_series(facts, ("RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "SalesRevenueNet")),
+        "revenue": revenue_series(facts),
         "net_income": fact_series(facts, ("ProfitLoss", "NetIncomeLoss")),
         "assets": fact_series(facts, ("Assets",)),
     }
